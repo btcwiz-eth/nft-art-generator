@@ -14,12 +14,17 @@ const mergeImages = require('merge-images');
 const { Image, Canvas } = require('canvas');
 const ImageDataURI = require('image-data-uri');
 
+// COMMON FILE NAME
+const blank = 'none.png';
+const snakeb = 'snake-b.png';
+const snakea = 'snake-a.png';
+
 //SETTINGS
 let basePath;
 let outputPath;
 let traits;
 let traitsToSort = [];
-let order = [];
+let order = []
 let weights = {};
 let names = {};
 let weightedTraits = [];
@@ -28,8 +33,24 @@ let metaData = {};
 let config = {
   metaData: {},
   useCustomNames: null,
-  deleteDuplicates: null,
+  deleteDuplicates: true,
   generateMetadata: null,
+  order: [
+    'back',
+    'l-hands',
+    'body',
+    'exposed-cloth',
+    'r-hands',
+    'cloth',
+    'head',
+    'eyes',
+    'nose',
+    'passes',
+    'mouth',
+    'hats',
+    'ear',
+    'front'
+  ],
 };
 let argv = require('minimist')(process.argv.slice(2));
 
@@ -47,17 +68,17 @@ console.log(
   boxen(
     chalk.blue(
       ' /$$   /$$ /$$$$$$$$ /$$$$$$$$        /$$$$$$  /$$$$$$$  /$$$$$$$$        /$$$$$$  /$$$$$$$$ /$$   /$$ /$$$$$$$$ /$$$$$$$   /$$$$$$  /$$$$$$$$ /$$$$$$  /$$$$$$$ \n' +
-        '| $$$ | $$| $$_____/|__  $$__/       /$$__  $$| $$__  $$|__  $$__/       /$$__  $$| $$_____/| $$$ | $$| $$_____/| $$__  $$ /$$__  $$|__  $$__//$$__  $$| $$__  $$\n' +
-        '| $$$$| $$| $$         | $$         | $$  \\ $$| $$  \\ $$   | $$         | $$  \\__/| $$      | $$$$| $$| $$      | $$  \\ $$| $$  \\ $$   | $$  | $$  \\ $$| $$  \\ $$\n' +
-        '| $$ $$ $$| $$$$$      | $$         | $$$$$$$$| $$$$$$$/   | $$         | $$ /$$$$| $$$$$   | $$ $$ $$| $$$$$   | $$$$$$$/| $$$$$$$$   | $$  | $$  | $$| $$$$$$$/\n' +
-        '| $$  $$$$| $$__/      | $$         | $$__  $$| $$__  $$   | $$         | $$|_  $$| $$__/   | $$  $$$$| $$__/   | $$__  $$| $$__  $$   | $$  | $$  | $$| $$__  $$\n' +
-        '| $$\\  $$$| $$         | $$         | $$  | $$| $$  \\ $$   | $$         | $$  \\ $$| $$      | $$\\  $$$| $$      | $$  \\ $$| $$  | $$   | $$  | $$  | $$| $$  \\ $$\n' +
-        '| $$ \\  $$| $$         | $$         | $$  | $$| $$  | $$   | $$         |  $$$$$$/| $$$$$$$$| $$ \\  $$| $$$$$$$$| $$  | $$| $$  | $$   | $$  |  $$$$$$/| $$  | $$\n' +
-        '|__/  \\__/|__/         |__/         |__/  |__/|__/  |__/   |__/          \\______/ |________/|__/  \\__/|________/|__/  |__/|__/  |__/   |__/   \\______/ |__/  |__/\n \n' +
-        'Made with '
+      '| $$$ | $$| $$_____/|__  $$__/       /$$__  $$| $$__  $$|__  $$__/       /$$__  $$| $$_____/| $$$ | $$| $$_____/| $$__  $$ /$$__  $$|__  $$__//$$__  $$| $$__  $$\n' +
+      '| $$$$| $$| $$         | $$         | $$  \\ $$| $$  \\ $$   | $$         | $$  \\__/| $$      | $$$$| $$| $$      | $$  \\ $$| $$  \\ $$   | $$  | $$  \\ $$| $$  \\ $$\n' +
+      '| $$ $$ $$| $$$$$      | $$         | $$$$$$$$| $$$$$$$/   | $$         | $$ /$$$$| $$$$$   | $$ $$ $$| $$$$$   | $$$$$$$/| $$$$$$$$   | $$  | $$  | $$| $$$$$$$/\n' +
+      '| $$  $$$$| $$__/      | $$         | $$__  $$| $$__  $$   | $$         | $$|_  $$| $$__/   | $$  $$$$| $$__/   | $$__  $$| $$__  $$   | $$  | $$  | $$| $$__  $$\n' +
+      '| $$\\  $$$| $$         | $$         | $$  | $$| $$  \\ $$   | $$         | $$  \\ $$| $$      | $$\\  $$$| $$      | $$  \\ $$| $$  | $$   | $$  | $$  | $$| $$  \\ $$\n' +
+      '| $$ \\  $$| $$         | $$         | $$  | $$| $$  | $$   | $$         |  $$$$$$/| $$$$$$$$| $$ \\  $$| $$$$$$$$| $$  | $$| $$  | $$   | $$  |  $$$$$$/| $$  | $$\n' +
+      '|__/  \\__/|__/         |__/         |__/  |__/|__/  |__/   |__/          \\______/ |________/|__/  \\__/|________/|__/  |__/|__/  |__/   |__/   \\______/ |__/  |__/\n \n' +
+      'Made with '
     ) +
-      chalk.red('❤') +
-      chalk.blue(' by NotLuksus'),
+    chalk.red('❤') +
+    chalk.blue(' by NotLuksus'),
     { borderColor: 'red', padding: 3 }
   )
 );
@@ -67,7 +88,6 @@ async function main() {
   await loadConfig();
   await getBasePath();
   await getOutputPath();
-  await checkForDuplicates();
   await generateMetadataPrompt();
   if (config.generateMetadata) {
     await metadataSettings();
@@ -117,7 +137,7 @@ async function main() {
 
 //GET THE BASEPATH FOR THE IMAGES
 async function getBasePath() {
-  if (config.basePath !== undefined) { 
+  if (config.basePath !== undefined) {
     basePath = config.basePath;
     return;
   }
@@ -184,19 +204,6 @@ async function getOutputPath() {
   config.outputPath = outputPath;
 }
 
-async function checkForDuplicates() {
-  if (config.deleteDuplicates !== null) return;
-  let { checkDuplicates } = await inquirer.prompt([
-    {
-      type: 'confirm',
-      name: 'checkDuplicates',
-      message:
-        'Should duplicated images be deleted? (Might result in less images then expected)',
-    },
-  ]);
-  config.deleteDuplicates = checkDuplicates;
-}
-
 async function generateMetadataPrompt() {
   if (config.generateMetadata !== null) return;
   let { createMetadata } = await inquirer.prompt([
@@ -244,9 +251,16 @@ async function metadataSettings() {
 //SELECT THE ORDER IN WHICH THE TRAITS SHOULD BE COMPOSITED
 async function traitsOrder(isFirst) {
   if (config.order && config.order.length === traits.length) {
-    order = config.order;
+    const arr = [];
+
+    for (let t of config.order) {
+      arr.push(traits.indexOf(t));
+    }
+
+    order = arr;
     return;
   }
+
   const traitsPrompt = {
     type: 'list',
     name: 'selected',
@@ -262,6 +276,7 @@ async function traitsOrder(isFirst) {
     });
   });
   const { selected } = await inquirer.prompt(traitsPrompt);
+  console.log(selected);
   order.push(selected);
   config.order = order;
   let localIndex = traitsToSort.indexOf(traits[selected]);
@@ -272,63 +287,36 @@ async function traitsOrder(isFirst) {
 
 //SELECT IF WE WANT TO SET CUSTOM NAMES FOR EVERY TRAITS OR USE FILENAMES
 async function customNamesPrompt() {
-    if (config.useCustomNames !== null) return;
-    let { useCustomNames } = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'useCustomNames',
-        message: 'How should be constructed the names of the traits?',
-        choices: [
-          { name: 'Use filenames as traits names', value: 0 },
-          { name: 'Choose custom names for each trait', value: 1 },
-        ],
-      },
-    ]);
-    config.useCustomNames = useCustomNames;
+  if (config.useCustomNames !== null) return;
+  config.useCustomNames = 0;
 }
 
 //SET NAMES FOR EVERY TRAIT
 async function setNames(trait) {
-  if (config.useCustomNames) {
-    names = config.names || names;
-    const files = await getFilesForTrait(trait);
-    const namePrompt = [];
-    files.forEach((file, i) => {
-      if (config.names && config.names[file] !== undefined) return;
-      namePrompt.push({
-        type: 'input',
-        name: trait + '_name_' + i,
-        message: 'What should be the name of the trait shown in ' + file + '?',
-      });
-    });
-    const selectedNames = await inquirer.prompt(namePrompt);
-    files.forEach((file, i) => {
-      if (config.names && config.names[file] !== undefined) return;
-      names[file] = selectedNames[trait + '_name_' + i];
-    });
-    config.names = {...config.names, ...names};
-  } else {
-    const files = fs.readdirSync(basePath + '/' + trait);
-    files.forEach((file, i) => {
-      names[file] = file.split('.')[0];
-    });
-  }
+  const files = fs.readdirSync(basePath + '/' + trait);
+  files.forEach((file, i) => {
+    names[file] = file.split('.')[0];
+  });
 }
 
 //SET WEIGHTS FOR EVERY TRAIT
 async function setWeights(trait) {
-  if (config.weights && Object.keys(config.weights).length === Object.keys(names).length ) {
+  if (config.weights && Object.keys(config.weights).length === Object.keys(names).length) {
     weights = config.weights;
     return;
   }
   const files = await getFilesForTrait(trait);
   const weightPrompt = [];
   files.forEach((file, i) => {
+    let defaultWeight = parseInt(Math.round(10000 / files.length));
+    if (file === snakea) {
+      defaultWeight = 0
+    }
     weightPrompt.push({
       type: 'input',
       name: names[file] + '_weight',
       message: 'How many ' + names[file] + ' ' + trait + ' should there be?',
-      default: parseInt(Math.round(10000 / files.length)),
+      default: defaultWeight,
     });
   });
   const selectedWeights = await inquirer.prompt(weightPrompt);
@@ -368,11 +356,21 @@ async function generateImages() {
   if (config.deleteDuplicates) {
     while (!Object.values(weightedTraits).filter(arr => arr.length == 0).length && noMoreMatches < 20000) {
       let picked = [];
+      const pickedTraits = {};
       order.forEach(id => {
-        let pickedImgId = pickRandom(weightedTraits[id]);
-        picked.push(pickedImgId);
-        let pickedImg = weightedTraits[id][pickedImgId];
-        images.push(basePath + traits[id] + '/' + pickedImg);
+        // need to update this to corresponding correct match
+        // send in picked and does the filtering using memory
+        let pickedImgObj = pickRandom(weightedTraits[id], traits[id], pickedTraits);
+        if (pickedImgObj.num === -1) {
+          picked.push(-1);
+          images.push(basePath + traits[id] + '/' + pickedImgObj.image);
+          pickedTraits[traits[id]] = pickedImgObj.image;
+        } else {
+          picked.push(pickedImgObj.num);
+          let pickedImg = weightedTraits[id][pickedImgObj.num];
+          images.push(basePath + traits[id] + '/' + pickedImg);
+          pickedTraits[traits[id]] = pickedImg;
+        }
       });
 
       if (existCombination(images)) {
@@ -382,7 +380,9 @@ async function generateImages() {
         generateMetadataObject(id, images);
         noMoreMatches = 0;
         order.forEach((id, i) => {
-          remove(weightedTraits[id], picked[i]);
+          if (picked[i] !== -1) {
+            remove(weightedTraits[id], picked[i]);
+          }
         });
         seen.push(images);
         const b64 = await mergeImages(images, { Canvas: Canvas, Image: Image });
@@ -390,19 +390,6 @@ async function generateImages() {
         images = [];
         id++;
       }
-    }
-  } else {
-    while (!Object.values(weightedTraits).filter(arr => arr.length == 0).length) {
-      order.forEach(id => {
-        images.push(
-          basePath + traits[id] + '/' + pickRandomAndRemove(weightedTraits[id])
-        );
-      });
-      generateMetadataObject(id, images);
-      const b64 = await mergeImages(images, { Canvas: Canvas, Image: Image });
-      await ImageDataURI.outputFile(b64, outputPath + `${id}.png`);
-      images = [];
-      id++;
     }
   }
 }
@@ -412,17 +399,20 @@ function randomNumber(min, max) {
   return Math.round(Math.random() * (max - min) + min);
 }
 
-//PICKS A RANDOM INDEX INSIDE AN ARRAY RETURNS IT AND THEN REMOVES IT
-function pickRandomAndRemove(array) {
-  const toPick = randomNumber(0, array.length - 1);
-  const pick = array[toPick];
-  array.splice(toPick, 1);
-  return pick;
-}
-
 //PICKS A RANDOM INDEX INSIDE AND ARRAY RETURNS IT
-function pickRandom(array) {
-  return randomNumber(0, array.length - 1);
+function pickRandom(array, currentTrait, pickedTraits) {
+  // add restriction here to fixate the output
+
+  // special cases
+  if (pickedTraits['exposed-cloth'] !== blank && currentTrait === 'cloth') {
+    return { num: -1, image: blank }
+  }
+
+  if (pickedTraits['back'] === snakeb && currentTrait === 'front') {
+    return { num: -1, image: snakea }
+  }
+
+  return { num: randomNumber(0, array.length - 1), image: null };
 }
 
 function remove(array, toPick) {
@@ -458,17 +448,15 @@ function generateMetadataObject(id, images) {
 }
 
 async function writeMetadata() {
-  if(config.metaData.splitFiles)
-  {
+  if (config.metaData.splitFiles) {
     let metadata_output_dir = outputPath + "metadata/"
     if (!fs.existsSync(metadata_output_dir)) {
       fs.mkdirSync(metadata_output_dir, { recursive: true });
     }
-    for (var key in metaData){
+    for (var key in metaData) {
       await writeFile(metadata_output_dir + key, JSON.stringify(metaData[key]));
     }
-  }else
-  {
+  } else {
     await writeFile(outputPath + 'metadata.json', JSON.stringify(metaData));
   }
 }
@@ -477,7 +465,7 @@ async function loadConfig() {
   try {
     const data = await readFile('config.json')
     config = JSON.parse(data.toString());
-  } catch (error) {}
+  } catch (error) { }
 }
 
 async function writeConfig() {
