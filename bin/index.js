@@ -17,7 +17,25 @@ const ImageDataURI = require('image-data-uri');
 // COMMON FILE NAME
 const blank = 'none.png';
 const snakeb = 'snake-b.png';
-const snakea = 'snake-a.png';
+const robotb = 'robot-b.png';
+const pair = {
+  snake: {
+    'snake-b.png': 'snake-a.png'
+  },
+  headphones: {
+    'a2.png': 'a1.png',
+    'b2.png': 'b1.png',
+    'c2.png': 'c1.png',
+    'd2.png': 'd1.png',
+    'e2.png': 'e1.png',
+    'f2.png': 'f1.png',
+    'g2.png': 'g1.png',
+    'h2.png': 'h1.png',
+  },
+  fullbody: {
+    'robot-b.png': 'robot-a.png'
+  }
+}
 
 //SETTINGS
 let basePath;
@@ -39,17 +57,24 @@ let config = {
     'back',
     'l-hands',
     'body',
+    'skin',
     'exposed-cloth',
     'r-hands',
     'cloth',
+    'necklaces',
+    'overheadphones-l',
+    'headphones-l',
     'head',
     'eyes',
     'nose',
-    'passes',
     'mouth',
     'hats',
+    'overheadphones-r',
+    'headphones-r',
+    'fullbody',
     'ear',
-    'front'
+    'front',
+    'pet'
   ],
 };
 let argv = require('minimist')(process.argv.slice(2));
@@ -63,25 +88,6 @@ const getDirectories = source =>
 
 const sleep = seconds => new Promise(resolve => setTimeout(resolve, seconds * 1000))
 
-//OPENING
-console.log(
-  boxen(
-    chalk.blue(
-      ' /$$   /$$ /$$$$$$$$ /$$$$$$$$        /$$$$$$  /$$$$$$$  /$$$$$$$$        /$$$$$$  /$$$$$$$$ /$$   /$$ /$$$$$$$$ /$$$$$$$   /$$$$$$  /$$$$$$$$ /$$$$$$  /$$$$$$$ \n' +
-      '| $$$ | $$| $$_____/|__  $$__/       /$$__  $$| $$__  $$|__  $$__/       /$$__  $$| $$_____/| $$$ | $$| $$_____/| $$__  $$ /$$__  $$|__  $$__//$$__  $$| $$__  $$\n' +
-      '| $$$$| $$| $$         | $$         | $$  \\ $$| $$  \\ $$   | $$         | $$  \\__/| $$      | $$$$| $$| $$      | $$  \\ $$| $$  \\ $$   | $$  | $$  \\ $$| $$  \\ $$\n' +
-      '| $$ $$ $$| $$$$$      | $$         | $$$$$$$$| $$$$$$$/   | $$         | $$ /$$$$| $$$$$   | $$ $$ $$| $$$$$   | $$$$$$$/| $$$$$$$$   | $$  | $$  | $$| $$$$$$$/\n' +
-      '| $$  $$$$| $$__/      | $$         | $$__  $$| $$__  $$   | $$         | $$|_  $$| $$__/   | $$  $$$$| $$__/   | $$__  $$| $$__  $$   | $$  | $$  | $$| $$__  $$\n' +
-      '| $$\\  $$$| $$         | $$         | $$  | $$| $$  \\ $$   | $$         | $$  \\ $$| $$      | $$\\  $$$| $$      | $$  \\ $$| $$  | $$   | $$  | $$  | $$| $$  \\ $$\n' +
-      '| $$ \\  $$| $$         | $$         | $$  | $$| $$  | $$   | $$         |  $$$$$$/| $$$$$$$$| $$ \\  $$| $$$$$$$$| $$  | $$| $$  | $$   | $$  |  $$$$$$/| $$  | $$\n' +
-      '|__/  \\__/|__/         |__/         |__/  |__/|__/  |__/   |__/          \\______/ |________/|__/  \\__/|________/|__/  |__/|__/  |__/   |__/   \\______/ |__/  |__/\n \n' +
-      'Made with '
-    ) +
-    chalk.red('❤') +
-    chalk.blue(' by NotLuksus'),
-    { borderColor: 'red', padding: 3 }
-  )
-);
 main();
 
 async function main() {
@@ -299,6 +305,14 @@ async function setNames(trait) {
   });
 }
 
+const invisibleFiles = {};
+
+for (let k of Object.keys(pair)) {
+  for (let p of Object.keys(pair[k])) {
+    invisibleFiles[pair[k][p]] = true;
+  }
+}
+
 //SET WEIGHTS FOR EVERY TRAIT
 async function setWeights(trait) {
   if (config.weights && Object.keys(config.weights).length === Object.keys(names).length) {
@@ -307,11 +321,27 @@ async function setWeights(trait) {
   }
   const files = await getFilesForTrait(trait);
   const weightPrompt = [];
-  files.forEach((file, i) => {
-    let defaultWeight = parseInt(Math.round(10000 / files.length));
-    if (file === snakea) {
-      defaultWeight = 0
+
+  let numOFValidFiles = [];
+
+  for (let file of files) {
+    if (!invisibleFiles[file]) {
+      numOFValidFiles.push(file)
     }
+  }
+
+  files.forEach((file, i) => {
+    let defaultWeight = parseInt(Math.round(10000 / numOFValidFiles.length));
+
+    // weight restriction
+    for (let k of Object.keys(pair)) {
+      for (let p of Object.keys(pair[k])) {
+        if (pair[k][p] === file) {
+          defaultWeight = 0
+        }
+      }
+    }
+
     weightPrompt.push({
       type: 'input',
       name: names[file] + '_weight',
@@ -373,6 +403,8 @@ async function generateImages() {
         }
       });
 
+      console.log(pickedTraits);
+
       if (existCombination(images)) {
         noMoreMatches++;
         images = [];
@@ -404,12 +436,73 @@ function pickRandom(array, currentTrait, pickedTraits) {
   // add restriction here to fixate the output
 
   // special cases
-  if (pickedTraits['exposed-cloth'] !== blank && currentTrait === 'cloth') {
-    return { num: -1, image: blank }
-  }
+  if (currentTrait === 'cloth') { //cloth
+    if (pickedTraits['exposed-cloth'] !== blank) {
+      return { num: -1, image: blank }
+    }
 
-  if (pickedTraits['back'] === snakeb && currentTrait === 'front') {
-    return { num: -1, image: snakea }
+    if (pickedTraits['skin'] !== blank) { //skin
+      return { num: -1, image: blank }
+    }
+  } else if (currentTrait === 'overheadphones-l') { //overheadphone left
+    if (pickedTraits['headphones-l'] !== blank) {
+      return { num: -1, image: blank }
+    }
+  } else if (currentTrait === 'overheadphones-r') { //overheadphone right
+    if (pickedTraits['overheadphones-l'] !== blank)
+      return { num: -1, image: pair.headphones[pickedTraits['overheadphones-l']] }
+  } else if (currentTrait === 'hats') {
+    if (pickedTraits['overheadphones-l'] !== blank) {
+      return { num: -1, image: blank }
+    }
+  } else if (currentTrait === 'headphones-r') { //headphone right
+    if (pickedTraits['headphones-l'] !== blank) {
+      return { num: -1, image: pair.headphones[pickedTraits['headphones-l']] }
+    }
+  } else if (currentTrait === 'headphones-l') { //headphone left
+    if (pickedTraits['back'] === snakeb) {
+      return { num: -1, image: blank }
+    }
+  } else if (currentTrait === 'front') { //front
+    if (pickedTraits['back'] === snakeb) {
+      return { num: -1, image: pair.snake[pickedTraits['back']] }
+    }
+  } else if (currentTrait === 'pet') { // pet
+    if (pickedTraits['back'] === snakeb) {
+      return { num: -1, image: blank }
+    }
+
+    if (pickedTraits['headphones-l'] !== blank) {
+      return { num: -1, image: blank }
+    }
+  } else if (currentTrait === 'exposed-cloth') { // exposed cloth
+    if (pickedTraits['skin'] === robotb) {
+      return { num: -1, image: blank }
+    }
+  } else if (currentTrait === 'eyes') { // eyes
+    if (pickedTraits['skin'] === robotb) {
+      return { num: -1, image: pair.fullbody[robotb] }
+    }
+  } else if (currentTrait === 'necklaces') { // necklaces
+    if (pickedTraits['skin'] !== blank) {
+      return { num: -1, image: blank }
+    }
+  } else if (currentTrait === 'fullbody') { // full body
+    if (pickedTraits['skin'] !== blank) {
+      return { num: -1, image: blank }
+    }
+
+    if (pickedTraits['cloth'] !== blank) {
+      return { num: -1, image: blank }
+    }
+
+    if (pickedTraits['exposed-cloth'] !== blank) {
+      return { num: -1, image: blank }
+    }
+
+    if (pickedTraits['necklaces'] !== blank) {
+      return { num: -1, image: blank }
+    }
   }
 
   return { num: randomNumber(0, array.length - 1), image: null };
