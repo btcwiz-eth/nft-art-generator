@@ -503,6 +503,10 @@ function pickRandom(array, currentTrait, pickedTraits) {
     if (pickedTraits['necklaces'] !== blank) {
       return { num: -1, image: blank }
     }
+
+    if (pickedTraits['hats'] !== blank) {
+      return { num: -1, image: blank }
+    }
   }
 
   return { num: randomNumber(0, array.length - 1), image: null };
