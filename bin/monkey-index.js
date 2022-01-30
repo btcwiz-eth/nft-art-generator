@@ -159,7 +159,7 @@ async function getBasePath() {
     },
   ]);
   if (base_path === 0) {
-    basePath = process.cwd() + '/images/';
+    basePath = process.cwd() + '/monkey-images/';
   } else {
     const { file_location } = await inquirer.prompt([
       {
@@ -193,7 +193,7 @@ async function getOutputPath() {
     },
   ]);
   if (output_path === 0) {
-    outputPath = process.cwd() + '/output/';
+    outputPath = process.cwd() + '/monkey-output/';
   } else {
     const { file_location } = await inquirer.prompt([
       {
