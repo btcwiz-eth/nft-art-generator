@@ -14,6 +14,8 @@ const mergeImages = require('merge-images');
 const { Image, Canvas } = require('canvas');
 const ImageDataURI = require('image-data-uri');
 
+const mammals = 'sloth';
+
 // COMMON FILE NAME
 const blank = 'none.png';
 const snakeb = 'snake-b.png';
@@ -159,7 +161,7 @@ async function getBasePath() {
     },
   ]);
   if (base_path === 0) {
-    basePath = process.cwd() + '/bear-images/';
+    basePath = process.cwd() + `/${mammals}-images/`;
   } else {
     const { file_location } = await inquirer.prompt([
       {
@@ -193,7 +195,7 @@ async function getOutputPath() {
     },
   ]);
   if (output_path === 0) {
-    outputPath = process.cwd() + '/bear-output/';
+    outputPath = process.cwd() + `/${mammals}-output/`;
   } else {
     const { file_location } = await inquirer.prompt([
       {
